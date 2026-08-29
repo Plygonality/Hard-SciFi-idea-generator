@@ -472,10 +472,10 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "examples:\n"
-            "  python3 Hard-SciFi_Idea_Generator.py\n"
-            "  python3 Hard-SciFi_Idea_Generator.py -n 3\n"
-            "  python3 Hard-SciFi_Idea_Generator.py --mood menacing --avoid organic\n"
-            "  python3 Hard-SciFi_Idea_Generator.py --require derelict --seed 1234 -n 1\n"
+            "  python -m hard_scifi_idea_generator\n"
+            "  python -m hard_scifi_idea_generator -n 3\n"
+            "  python -m hard_scifi_idea_generator --mood menacing --avoid organic\n"
+            "  python -m hard_scifi_idea_generator --require derelict --seed 1234 -n 1\n"
         ),
     )
     parser.add_argument("-n", "--count", type=int, default=1,

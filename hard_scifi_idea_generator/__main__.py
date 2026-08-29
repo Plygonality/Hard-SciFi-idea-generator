@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Backward-compatible entry for python3 Hard-SciFi_Idea_Generator.py."""
+"""Canonical module entry: python -m hard_scifi_idea_generator."""
 
 from hard_scifi_idea_generator import main
 

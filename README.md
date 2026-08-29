@@ -2,6 +2,8 @@
 
 Hard sci-fi concept generator for 3D artists. Builds coherent megastructure prompts with lighting, palette, and composition notes.
 
+It exists to turn a blank canvas into a portfolio-ready megastructure look-dev brief: a grammatical project prompt plus lighting, palette, and composition notes you can take straight into a scene.
+
 Use it to break a creative block and seed narrative-driven portfolio work: megastructural engineering, speculative technology, and the societal or philosophical questions those structures raise. Each run is a production brief, not just a logline — a grammatical project prompt plus art-direction notes for lighting, palette, and composition, biased toward the mood of the story.
 
 Fragments carry semantic tags and optional `requires` / `conflicts` rules. A backtracking solver keeps combinations coherent, so an abandoned ruin will not appear under active construction, and de-evolving inhabitants will not turn up in a structure with no one left. Seeds are reproducible; `--require`, `--avoid`, and `--mood` let you steer.
@@ -12,9 +14,19 @@ Python 3.10 or newer. No third-party packages.
 
 ## Usage
 
+Canonical invoke (from a clone, or after `pip install .`):
+
 ```bash
-python3 Hard-SciFi_Idea_Generator.py
+python -m hard_scifi_idea_generator
 ```
+
+After install, the same entry point is also the console script:
+
+```bash
+hard-scifi-idea-generator
+```
+
+`python3 Hard-SciFi_Idea_Generator.py` still works from the repo root.
 
 ```
 ==============================================================
@@ -48,10 +60,10 @@ A 3D scene depicting: a derelict Ringworld segment,
 | `--list-tags` | Show every tag the pools can produce |
 
 ```bash
-python3 Hard-SciFi_Idea_Generator.py -n 3
-python3 Hard-SciFi_Idea_Generator.py --mood menacing --avoid organic
-python3 Hard-SciFi_Idea_Generator.py --require derelict --seed 1234
-python3 Hard-SciFi_Idea_Generator.py --list-tags
+python -m hard_scifi_idea_generator -n 3
+python -m hard_scifi_idea_generator --mood menacing --avoid organic
+python -m hard_scifi_idea_generator --require derelict --seed 1234
+python -m hard_scifi_idea_generator --list-tags
 ```
 
 Reproduce any printed concept with the same filters and `--seed <printed seed> --count 1`.

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hard-scifi-idea-generator"
+version = "0.1.0"
+description = "Hard sci-fi concept generator for 3D artists. Builds coherent megastructure prompts with lighting, palette, and composition notes."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Plygonality" }]
+keywords = [
+    "python",
+    "sci-fi",
+    "procedural",
+    "prompt-generator",
+    "3d-art",
+    "worldbuilding",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+]
+dependencies = []
+
+[project.scripts]
+hard-scifi-idea-generator = "hard_scifi_idea_generator:main"
+
+[project.urls]
+Homepage = "https://github.com/Plygonality/Hard-SciFi-idea-generator"
+
+[tool.setuptools.packages.find]
+include = ["hard_scifi_idea_generator"]

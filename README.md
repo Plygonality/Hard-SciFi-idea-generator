@@ -1,10 +1,10 @@
 # Hard Sci-Fi Idea Generator
 
-A CLI that breaks creative block for 3D artists working on narrative, hard-sci-fi portfolio pieces.
+Hard sci-fi concept generator for 3D artists. Builds coherent megastructure prompts with lighting, palette, and composition notes.
 
-It does not just concatenate random fragments. Every idea carries semantic tags plus optional `requires` / `conflicts` rules. A backtracking solver keeps combinations coherent — it will not put an abandoned ruin under active construction, or house de-evolving inhabitants in a structure with no one left.
+Use it to break a creative block and seed narrative-driven portfolio work: megastructural engineering, speculative technology, and the societal or philosophical questions those structures raise. Each run is a production brief, not just a logline — a grammatical project prompt plus art-direction notes for lighting, palette, and composition, biased toward the mood of the story.
 
-The output is a production brief: a grammatical project prompt plus lighting, palette, and composition notes, biased toward the mood of the narrative.
+Fragments carry semantic tags and optional `requires` / `conflicts` rules. A backtracking solver keeps combinations coherent, so an abandoned ruin will not appear under active construction, and de-evolving inhabitants will not turn up in a structure with no one left. Seeds are reproducible; `--require`, `--avoid`, and `--mood` let you steer.
 
 ## Requirements
 

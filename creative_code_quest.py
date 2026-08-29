@@ -364,6 +364,16 @@ class ConceptGenerator:
     def generate(self, rng: random.Random) -> dict[str, Fragment]:
         """Return one fragment per axis satisfying all constraints."""
         axis_names = list(self.axes)
+        pools = {name: self._pool(name) for name in axis_names}
+        # Union of tags still available from axis i onward — used to abandon
+        # branches that can no longer satisfy --require or a fragment's
+        # `requires` without walking the rest of the tree.
+        suffix_tags: list[frozenset[str]] = [frozenset()] * (len(axis_names) + 1)
+        available: set[str] = set()
+        for i in range(len(axis_names) - 1, -1, -1):
+            for frag in pools[axis_names[i]]:
+                available |= frag.tags
+            suffix_tags[i] = frozenset(available)
         chosen: dict[str, Fragment] = {}
 
         def backtrack(i: int, acc_tags: frozenset[str]) -> bool:
@@ -374,9 +384,15 @@ class ConceptGenerator:
                     return False
                 return all(f.requires <= acc_tags for f in chosen.values())
 
+            if not (self.require - acc_tags) <= suffix_tags[i]:
+                return False
+
             name = axis_names[i]
-            for frag in self._weighted_order(self._pool(name), rng, acc_tags):
+            for frag in self._weighted_order(pools[name], rng, acc_tags):
                 if not self._compatible(frag, acc_tags, chosen):
+                    continue
+                missing = frag.requires - (acc_tags | frag.tags)
+                if missing and not missing <= suffix_tags[i + 1]:
                     continue
                 chosen[name] = frag
                 if backtrack(i + 1, acc_tags | frag.tags):

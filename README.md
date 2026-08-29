@@ -13,7 +13,7 @@ Python 3.10 or newer. No third-party packages.
 ## Usage
 
 ```bash
-python3 creative_code_quest.py
+python3 Hard-SciFi_Idea_Generator.py
 ```
 
 ```
@@ -48,10 +48,10 @@ A 3D scene depicting: a derelict Ringworld segment,
 | `--list-tags` | Show every tag the pools can produce |
 
 ```bash
-python3 creative_code_quest.py -n 3
-python3 creative_code_quest.py --mood menacing --avoid organic
-python3 creative_code_quest.py --require derelict --seed 1234
-python3 creative_code_quest.py --list-tags
+python3 Hard-SciFi_Idea_Generator.py -n 3
+python3 Hard-SciFi_Idea_Generator.py --mood menacing --avoid organic
+python3 Hard-SciFi_Idea_Generator.py --require derelict --seed 1234
+python3 Hard-SciFi_Idea_Generator.py --list-tags
 ```
 
 Reproduce any printed concept with the same filters and `--seed <printed seed> --count 1`.

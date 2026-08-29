@@ -147,7 +147,7 @@ class Concept:
     @property
     def prompt(self) -> str:
         """One grammatical sentence an artist can drop into a brief."""
-        return f"A 3D scene depicting {self.structure} {self.condition}, {self.theme}."
+        return f"A 3D scene depicting {self.structure}, {self.condition}, {self.theme}."
 
 
 def _pick(rng: random.Random, options: Sequence[str]) -> str:

@@ -11,7 +11,7 @@ Python 3.10 or newer. No third-party packages.
 ## Usage
 
 ```bash
-python creative_code_quest.py
+python3 creative_code_quest.py
 ```
 
 ```
@@ -20,7 +20,7 @@ python creative_code_quest.py
 ============================================================
 
 [ PROJECT PROMPT ]
-A 3D scene depicting a derelict Ringworld segment being
+A 3D scene depicting a derelict Ringworld segment, being
 deconstructed by self-replicating Von Neumann probes, built
 as a monument to a civilization's greatest failure.
 
@@ -42,13 +42,13 @@ Scale cue   : a maintenance drone the size of a city
 | `-o`, `--output PATH` | Write to a file instead of stdout |
 
 ```bash
-python creative_code_quest.py --count 5 --brief
-python creative_code_quest.py --seed 42
-python creative_code_quest.py --json --output concepts.json
+python3 creative_code_quest.py --count 5 --brief
+python3 creative_code_quest.py --seed 42
+python3 creative_code_quest.py --json --output concepts.json
 ```
 
 ## Tests
 
 ```bash
-python -m unittest discover -v
+python3 -m unittest discover -v
 ```

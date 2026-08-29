@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Hard-SciFi_Generator.py
+# Hard-SciFi_Idea_Generator.py
 
 """
 Hard Sci-Fi Concept Generator for 3D Artists.
@@ -30,7 +30,7 @@ WHAT'S NEW (vs. the flat random.choice version)
    seed so you can regenerate the exact one), and CLI flags to request N
    concepts and to steer with --require / --avoid / --mood.
 
-Run `python3 creative_code_quest.py --help` for usage.
+Run `python3 Hard-SciFi_Idea_Generator.py --help` for usage.
 """
 
 from __future__ import annotations
@@ -475,10 +475,10 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "examples:\n"
-            "  python3 creative_code_quest.py\n"
-            "  python3 creative_code_quest.py -n 3\n"
-            "  python3 creative_code_quest.py --mood menacing --avoid organic\n"
-            "  python3 creative_code_quest.py --require derelict --seed 1234 -n 1\n"
+            "  python3 Hard-SciFi_Idea_Generator.py\n"
+            "  python3 Hard-SciFi_Idea_Generator.py -n 3\n"
+            "  python3 Hard-SciFi_Idea_Generator.py --mood menacing --avoid organic\n"
+            "  python3 Hard-SciFi_Idea_Generator.py --require derelict --seed 1234 -n 1\n"
         ),
     )
     parser.add_argument("-n", "--count", type=int, default=1,

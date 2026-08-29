@@ -3,12 +3,21 @@
 
 from __future__ import annotations
 
+import importlib.util
 import random
+import sys
 import unittest
 from io import StringIO
+from pathlib import Path
 from unittest.mock import patch
 
-import creative_code_quest as quest
+_GENERATOR = Path(__file__).resolve().parent / "Hard-SciFi_Idea_Generator.py"
+_SPEC = importlib.util.spec_from_file_location("hard_scifi_idea_generator", _GENERATOR)
+if _SPEC is None or _SPEC.loader is None:
+    raise ImportError(f"Could not load {_GENERATOR}")
+quest = importlib.util.module_from_spec(_SPEC)
+sys.modules[_SPEC.name] = quest
+_SPEC.loader.exec_module(quest)
 
 
 def concept_tags(concept: dict[str, quest.Fragment]) -> frozenset[str]:

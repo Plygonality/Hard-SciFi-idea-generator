@@ -3,21 +3,15 @@
 
 from __future__ import annotations
 
-import importlib.util
 import random
+import subprocess
 import sys
 import unittest
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-_GENERATOR = Path(__file__).resolve().parent / "Hard-SciFi_Idea_Generator.py"
-_SPEC = importlib.util.spec_from_file_location("hard_scifi_idea_generator", _GENERATOR)
-if _SPEC is None or _SPEC.loader is None:
-    raise ImportError(f"Could not load {_GENERATOR}")
-quest = importlib.util.module_from_spec(_SPEC)
-sys.modules[_SPEC.name] = quest
-_SPEC.loader.exec_module(quest)
+import hard_scifi_idea_generator as quest
 
 
 def concept_tags(concept: dict[str, quest.Fragment]) -> frozenset[str]:
@@ -219,6 +213,32 @@ class CliTests(unittest.TestCase):
         text = out.getvalue()
         self.assertIn("derelict", text)
         self.assertIn("(mood)", text)
+
+    def test_legacy_script_still_runs(self) -> None:
+        script = Path(__file__).resolve().parent / "Hard-SciFi_Idea_Generator.py"
+        completed = subprocess.run(
+            [sys.executable, str(script), "--seed", "42", "--plain"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            completed.stdout.strip(),
+            quest.prompt_sentence(generate(seed=42)),
+        )
+
+    def test_module_entry_still_matches_library(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, "-m", "hard_scifi_idea_generator", "--seed", "42", "--plain"],
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).resolve().parent,
+        )
+        self.assertEqual(
+            completed.stdout.strip(),
+            quest.prompt_sentence(generate(seed=42)),
+        )
 
 
 if __name__ == "__main__":

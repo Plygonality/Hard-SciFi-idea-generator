@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import random
+import sys
 import unittest
 from io import StringIO
 from pathlib import Path
@@ -15,6 +16,7 @@ _SPEC = importlib.util.spec_from_file_location("hard_scifi_idea_generator", _GEN
 if _SPEC is None or _SPEC.loader is None:
     raise ImportError(f"Could not load {_GENERATOR}")
 quest = importlib.util.module_from_spec(_SPEC)
+sys.modules[_SPEC.name] = quest
 _SPEC.loader.exec_module(quest)
 
 

@@ -1,126 +1,214 @@
 #!/usr/bin/env python3
-"""Tests for the hard sci-fi concept generator."""
+"""Tests for the coherence-aware hard sci-fi concept generator."""
 
 from __future__ import annotations
 
-import json
-import tempfile
+import random
 import unittest
 from io import StringIO
-from pathlib import Path
+from unittest.mock import patch
 
 import creative_code_quest as quest
 
 
+def concept_tags(concept: dict[str, quest.Fragment]) -> frozenset[str]:
+    return frozenset().union(*(frag.tags for frag in concept.values()))
+
+
+def generate(
+    seed: int = 0,
+    require: frozenset[str] | set[str] = frozenset(),
+    avoid: frozenset[str] | set[str] = frozenset(),
+) -> dict[str, quest.Fragment]:
+    return quest.ConceptGenerator(
+        require=frozenset(require),
+        avoid=frozenset(avoid),
+    ).generate(random.Random(seed))
+
+
 class CatalogTests(unittest.TestCase):
-    def test_catalogs_are_nonempty(self) -> None:
-        for name in (
-            "STRUCTURES",
-            "CONDITIONS",
-            "THEMES",
-            "LIGHTING",
-            "CAMERAS",
-            "SURFACES",
-            "SCALE_CUES",
-        ):
+    POOLS = (
+        "STRUCTURES",
+        "TECHNOLOGIES",
+        "THEMES",
+        "LIGHTING",
+        "PALETTE",
+        "COMPOSITION",
+    )
+
+    def test_catalogs_are_nonempty_and_unique(self) -> None:
+        for name in self.POOLS:
             catalog = getattr(quest, name)
             self.assertGreater(len(catalog), 0, msg=name)
-            self.assertEqual(len(catalog), len(set(catalog)), msg=f"duplicates in {name}")
+            texts = [frag.text for frag in catalog]
+            self.assertEqual(len(texts), len(set(texts)), msg=f"duplicates in {name}")
 
-    def test_fragments_have_no_trailing_punctuation(self) -> None:
-        for catalog in (
-            quest.STRUCTURES,
-            quest.CONDITIONS,
-            quest.THEMES,
-            quest.LIGHTING,
-            quest.CAMERAS,
-            quest.SURFACES,
-            quest.SCALE_CUES,
-        ):
-            for fragment in catalog:
-                self.assertFalse(fragment.endswith("."), msg=fragment)
-                self.assertEqual(fragment, fragment.strip(), msg=fragment)
+    def test_axes_cover_every_pool(self) -> None:
+        self.assertEqual(set(quest.AXES), {
+            "structure",
+            "technology",
+            "theme",
+            "lighting",
+            "palette",
+            "composition",
+        })
+
+    def test_fragments_are_trimmed_and_unpunctuated(self) -> None:
+        for name in self.POOLS:
+            for frag in getattr(quest, name):
+                self.assertEqual(frag.text, frag.text.strip(), msg=frag.text)
+                self.assertFalse(frag.text.endswith("."), msg=frag.text)
+
+    def test_moods_are_labeled(self) -> None:
+        self.assertTrue(quest.MOODS <= {
+            "desolate", "sublime", "menacing", "melancholy", "uncanny",
+        })
+
+
+class CoherenceTests(unittest.TestCase):
+    def assert_coherent(self, concept: dict[str, quest.Fragment]) -> None:
+        tags = concept_tags(concept)
+        for frag in concept.values():
+            self.assertTrue(
+                frag.requires <= tags,
+                msg=f"{frag.text!r} missing required {frag.requires - tags}",
+            )
+            self.assertFalse(
+                frag.conflicts & tags,
+                msg=f"{frag.text!r} conflicts with {frag.conflicts & tags}",
+            )
+            for other in concept.values():
+                self.assertFalse(
+                    other.conflicts & frag.tags,
+                    msg=f"{other.text!r} forbids tags from {frag.text!r}",
+                )
+
+    def test_default_generation_is_always_coherent(self) -> None:
+        for seed in range(80):
+            self.assert_coherent(generate(seed=seed))
+
+    def test_abandoned_ruin_is_never_under_construction(self) -> None:
+        constructing = "being constructed by self-replicating Von Neumann probes"
+        for seed in range(80):
+            concept = generate(seed=seed)
+            tags = concept_tags(concept)
+            if {"abandoned", "derelict"} & tags:
+                self.assertNotEqual(concept["technology"].text, constructing)
+
+    def test_uninhabited_sites_have_no_living_archives(self) -> None:
+        living = "where the last organic beings are kept as living archives"
+        for seed in range(80):
+            concept = generate(seed=seed)
+            if "uninhabited" in concept_tags(concept):
+                self.assertNotEqual(concept["theme"].text, living)
+
+    def test_require_is_honored(self) -> None:
+        for seed in range(20):
+            concept = generate(seed=seed, require={"derelict"})
+            self.assertIn("derelict", concept_tags(concept))
+            self.assert_coherent(concept)
+
+    def test_avoid_is_honored(self) -> None:
+        for seed in range(20):
+            concept = generate(seed=seed, avoid={"organic"})
+            self.assertNotIn("organic", concept_tags(concept))
+            self.assert_coherent(concept)
+
+    def test_impossible_constraints_raise(self) -> None:
+        with self.assertRaises(quest.NoCoherentConceptError):
+            generate(require={"constructing", "deconstructing"})
+
+    def test_avoiding_every_mood_empties_art_direction(self) -> None:
+        with self.assertRaises(quest.NoCoherentConceptError):
+            generate(avoid=quest.MOODS)
 
 
 class GenerationTests(unittest.TestCase):
     def test_same_seed_is_reproducible(self) -> None:
-        first = quest.generate_concept(seed=42)
-        second = quest.generate_concept(seed=42)
-        self.assertEqual(first, second)
+        first = generate(seed=42)
+        second = generate(seed=42)
+        self.assertEqual(
+            {key: frag.text for key, frag in first.items()},
+            {key: frag.text for key, frag in second.items()},
+        )
 
-    def test_different_seeds_diverge(self) -> None:
-        first = quest.generate_concept(seed=1)
-        second = quest.generate_concept(seed=2)
-        self.assertNotEqual(first, second)
+    def test_different_seeds_can_diverge(self) -> None:
+        texts = {
+            tuple(frag.text for frag in generate(seed=seed).values())
+            for seed in range(12)
+        }
+        self.assertGreater(len(texts), 1)
 
-    def test_prompt_assembles_slots(self) -> None:
-        concept = quest.generate_concept(seed=7)
-        self.assertIn(concept.structure, concept.prompt)
-        self.assertIn(concept.condition, concept.prompt)
-        self.assertIn(concept.theme, concept.prompt)
-        self.assertTrue(concept.prompt.startswith("A 3D scene depicting "))
-        self.assertTrue(concept.prompt.endswith("."))
+    def test_prompt_assembles_narrative_slots(self) -> None:
+        concept = generate(seed=7)
+        sentence = quest.prompt_sentence(concept)
+        self.assertIn(concept["structure"].text, sentence)
+        self.assertIn(concept["technology"].text, sentence)
+        self.assertIn(concept["theme"].text, sentence)
+        self.assertTrue(sentence.startswith("A 3D scene depicting: "))
+        self.assertTrue(sentence.endswith("."))
 
-    def test_batch_uses_offset_seeds(self) -> None:
-        batch = quest.generate_concepts(count=3, seed=100)
-        self.assertEqual([item.seed for item in batch], [100, 101, 102])
-        self.assertEqual(batch[0], quest.generate_concept(seed=100))
-        self.assertEqual(batch[2], quest.generate_concept(seed=102))
+    def test_full_render_includes_art_direction_and_tags(self) -> None:
+        concept = generate(seed=9)
+        text = quest.render(concept, seed=9, index=1, total=1)
+        self.assertIn("seed 9", text)
+        self.assertIn(quest.prompt_sentence(concept), text)
+        self.assertIn(concept["lighting"].text, text)
+        self.assertIn(concept["palette"].text, text)
+        self.assertIn(concept["composition"].text, text)
+        self.assertIn("[ TAGS ]", text)
 
-    def test_invalid_count_raises(self) -> None:
-        with self.assertRaises(ValueError):
-            quest.generate_concepts(count=0)
-
-
-class FormatTests(unittest.TestCase):
-    def test_full_format_includes_art_direction(self) -> None:
-        concept = quest.generate_concept(seed=9)
-        text = quest.format_concept(concept)
-        self.assertIn(f"seed {concept.seed}", text)
-        self.assertIn(concept.prompt, text)
-        self.assertIn(concept.lighting, text)
-        self.assertIn(concept.camera, text)
-        self.assertIn(concept.surface, text)
-        self.assertIn(concept.scale_cue, text)
-
-    def test_brief_format_is_one_labeled_line(self) -> None:
-        concept = quest.generate_concept(seed=9)
-        text = quest.format_concept(concept, brief=True)
-        self.assertEqual(text.count("\n"), 1)
-        self.assertIn(concept.prompt, text)
-        self.assertNotIn("ART DIRECTION", text)
-
-    def test_json_format_is_valid_and_includes_prompt(self) -> None:
-        concepts = quest.generate_concepts(count=2, seed=3)
-        payload = json.loads(quest.format_concepts(concepts, as_json=True))
-        self.assertEqual(len(payload), 2)
-        self.assertEqual(payload[0]["seed"], 3)
-        self.assertEqual(payload[0]["prompt"], concepts[0].prompt)
-        self.assertEqual(payload[0]["structure"], concepts[0].structure)
+    def test_plain_render_is_the_logline(self) -> None:
+        concept = generate(seed=9)
+        self.assertEqual(
+            quest.render(concept, seed=9, index=1, total=1, plain=True),
+            quest.prompt_sentence(concept),
+        )
 
 
 class CliTests(unittest.TestCase):
     def test_cli_seed_matches_library(self) -> None:
-        buffer = StringIO()
-        status = quest.main(["--seed", "42", "--brief"], stream=buffer)
+        expected = quest.prompt_sentence(generate(seed=42))
+        with patch("sys.stdout", new=StringIO()) as out:
+            status = quest.main(["--seed", "42", "--plain"])
         self.assertEqual(status, 0)
-        expected = quest.format_concept(quest.generate_concept(seed=42), brief=True)
-        self.assertEqual(buffer.getvalue(), expected)
+        self.assertEqual(out.getvalue().strip(), expected)
 
     def test_cli_rejects_bad_count(self) -> None:
-        status = quest.main(["--count", "0"], stream=StringIO())
+        with patch("sys.stdout", new=StringIO()) as out:
+            status = quest.main(["--count", "0"])
         self.assertEqual(status, 2)
+        self.assertIn("error:", out.getvalue())
 
-    def test_cli_writes_output_file(self) -> None:
-        concept = quest.generate_concept(seed=11)
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "concept.txt"
-            status = quest.main(
-                ["--seed", "11", "--brief", "--output", str(path)],
-                stream=StringIO(),
-            )
-            self.assertEqual(status, 0)
-            self.assertEqual(path.read_text(encoding="utf-8"), quest.format_concept(concept, brief=True))
+    def test_cli_require_and_mood(self) -> None:
+        with patch("sys.stdout", new=StringIO()) as out:
+            status = quest.main([
+                "--seed", "11",
+                "--require", "derelict",
+                "--mood", "menacing",
+            ])
+        self.assertEqual(status, 0)
+        text = out.getvalue()
+        self.assertIn("derelict", text)
+        self.assertIn("menacing", text)
+        self.assertIn("[ ART DIRECTION ]", text)
+
+    def test_cli_impossible_filters(self) -> None:
+        with patch("sys.stdout", new=StringIO()) as out:
+            status = quest.main([
+                "--require", "constructing",
+                "--require", "deconstructing",
+            ])
+        self.assertEqual(status, 1)
+        self.assertIn("error:", out.getvalue())
+
+    def test_list_tags(self) -> None:
+        with patch("sys.stdout", new=StringIO()) as out:
+            status = quest.main(["--list-tags"])
+        self.assertEqual(status, 0)
+        text = out.getvalue()
+        self.assertIn("derelict", text)
+        self.assertIn("(mood)", text)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1 @@
+# Hard-SciFi-idea-generator
